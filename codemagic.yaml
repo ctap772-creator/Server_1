@@ -1,0 +1,14 @@
+workflows:
+  unity-ios-workflow:
+    name: Unity iOS Build
+    max_build_duration: 60
+    environment:
+      vars:
+        UNITY_BIN: "/Applications/Unity/Hub/Editor/2022.3.x/Unity.app/Contents/MacOS/Unity"
+    scripts:
+      - name: Unity build iOS project
+        script: |
+          echo "Bắt đầu xuất dự án Xcode từ Unity..."
+          # Lệnh này sẽ kích hoạt Unity trên máy ảo để build tự động
+    artifacts:
+      - build/ios/*.ipa
