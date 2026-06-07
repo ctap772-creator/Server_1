@@ -5,7 +5,7 @@ workflows:
     instance_type: mac_mini_m1
     environment:
       groups:
-        - unity_credentials # Nhóm biến chứa tài khoản Unity (UNITY_USERNAME, UNITY_PASSWORD, UNITY_SERIAL)
+        - unity_credentials # Nhóm biến chứa tài khoản Unity (UNITY_USERNAME, UNITY_PASSWORD)
       unity: 2022.3.46f1
       xcode: latest
       cocoapods: default
@@ -16,6 +16,8 @@ workflows:
           $UNITY_BIN \
             -batchmode \
             -quit \
+            -username "$UNITY_USERNAME" \
+            -password "$UNITY_PASSWORD" \
             -projectPath PROJECT_NRO_240_GOC \
             -buildTarget iOS \
             -executeMethod CodemagicBuildScript.BuildIOS \
