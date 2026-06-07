@@ -6,14 +6,28 @@ workflows:
     environment:
       groups:
         - unity_credentials # Nhóm biến chứa tài khoản Unity (UNITY_USERNAME, UNITY_PASSWORD)
-      unity: 2022.3.46f1
       xcode: latest
       cocoapods: default
     scripts:
+      - name: Retrieve Used Unity Version
+        script: |
+          # Trích xuất phiên bản Unity và changeset từ ProjectVersion.txt
+          UNITY_VERSION=$(echo $(sed -n '1p' PROJECT_NRO_240_GOC/ProjectSettings/ProjectVersion.txt) | cut -c 18-)
+          UNITY_VERSION_CHANGESET=$(echo $(sed -n '2p' PROJECT_NRO_240_GOC/ProjectSettings/ProjectVersion.txt) | cut -d "(" -f2 | cut -d ")" -f1 | xargs)
+          echo "UNITY_VERSION=$UNITY_VERSION" >> $CM_ENV
+          echo "UNITY_VERSION_CHANGESET=$UNITY_VERSION_CHANGESET" >> $CM_ENV
+          echo "UNITY_HOME=/Applications/Unity/Hub/Editor/${UNITY_VERSION}/Unity.app" >> $CM_ENV
+          echo "Đang sử dụng phiên bản Unity: $UNITY_VERSION ($UNITY_VERSION_CHANGESET)"
+      - name: Install Unity via Unity Hub CLI
+        script: |
+          echo "Bắt đầu tải và cài đặt Unity $UNITY_VERSION từ Unity Hub..."
+          yes Y | /Applications/Unity\ Hub.app/Contents/MacOS/Unity\ Hub -- --headless install --version $UNITY_VERSION --changeset $UNITY_VERSION_CHANGESET -a arm64
+          echo "Cài đặt iOS Build Support module cho Unity..."
+          yes Y | /Applications/Unity\ Hub.app/Contents/MacOS/Unity\ Hub -- --headless install-modules --version $UNITY_VERSION -m ios -a arm64
       - name: Unity build iOS project
         script: |
           echo "Bắt đầu xuất dự án Xcode từ Unity..."
-          $UNITY_BIN \
+          $UNITY_HOME/Contents/MacOS/Unity \
             -batchmode \
             -quit \
             -username "$UNITY_USERNAME" \
