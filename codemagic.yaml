@@ -26,56 +26,25 @@ workflows:
           yes Y | /Applications/Unity\ Hub.app/Contents/MacOS/Unity\ Hub -- --headless install-modules --version $UNITY_VERSION -m ios -a arm64
       - name: Unity build iOS project
         script: |
-          if [ -z "$UNITY_LICENSE" ]; then
-            echo "=================================================================="
-            echo "KHÔNG TÌM THẤY BIẾN MÔI TRƯỜNG UNITY_LICENSE!"
-            echo "Tiến hành tạo file yêu cầu kích hoạt bản quyền (.alf) để kích hoạt thủ công..."
-            echo "=================================================================="
-            
-            $UNITY_HOME/Contents/MacOS/Unity \
-              -batchmode \
-              -quit \
-              -createManualActivationFile \
-              -logfile unity_activation.log || true
-            
-            ALF_FILE=$(ls *.alf 2>/dev/null | head -n 1)
-            if [ -z "$ALF_FILE" ]; then
-              ALF_FILE=$(find . -name "*.alf" 2>/dev/null | head -n 1)
-            fi
-            
-            if [ -n "$ALF_FILE" ]; then
-              echo ""
-              echo ">>> BƯỚC 1: Sao chép TOÀN BỘ nội dung file .alf bên dưới:"
-              echo "------------------ BẮT ĐẦU NỘI DUNG (.alf) ------------------"
-              cat "$ALF_FILE"
-              echo "------------------ KẾT THÚC NỘI DUNG (.alf) ------------------"
-              echo ""
-              echo ">>> BƯỚC 2: Truy cập trang web: https://license.unity3d.com/manual"
-              echo ">>> BƯỚC 3: Tải nội dung này lên để nhận file bản quyền 'Unity_lic.ulf'."
-              echo ">>> BƯỚC 4: Mở file 'Unity_lic.ulf' bằng Notepad, copy toàn bộ nội dung xml."
-              echo ">>> BƯỚC 5: Lên trang Codemagic, thêm biến môi trường mới:"
-              echo "    - Name: UNITY_LICENSE"
-              echo "    - Value: (Dán nội dung file .ulf vào đây)"
-              echo "    - Group: unity_credentials (tích chọn Secret)"
-              echo ""
-              echo "Sau khi hoàn thành, hãy bấm 'Start new build' để hệ thống tự động build game!"
-            else
-              echo "Lỗi: Không tạo được file .alf. Chi tiết log bên dưới:"
-              cat unity_activation.log
-            fi
-            exit 1
-          fi
-
-          echo "Đã tìm thấy biến UNITY_LICENSE. Tiến hành ghi file bản quyền..."
-          sudo mkdir -p "/Library/Application Support/Unity"
-          sudo chmod -R 777 "/Library/Application Support/Unity"
-          mkdir -p "$HOME/Library/Application Support/Unity"
+          echo "Kích hoạt bản quyền Unity Personal trực tuyến bằng chế độ GUI..."
           
-          echo "$UNITY_LICENSE" | sudo tee "/Library/Application Support/Unity/Unity_lic.ulf" > /dev/null
-          echo "$UNITY_LICENSE" | tee "$HOME/Library/Application Support/Unity/Unity_lic.ulf" > /dev/null
-          echo "Đã ghi file bản quyền thành công!"
+          # Chạy Unity GUI dưới nền để đăng nhập và tự động tải bản quyền Personal cho máy ảo
+          $UNITY_HOME/Contents/MacOS/Unity \
+            -username "$UNITY_USERNAME" \
+            -password "$UNITY_PASSWORD" &
+          
+          UNITY_PID=$!
+          echo "Đang đợi Unity Editor đăng nhập và kích hoạt bản quyền trực tuyến (25 giây)..."
+          sleep 25
+          
+          echo "Tắt tiến trình Unity GUI..."
+          kill -9 $UNITY_PID || true
+          killall Unity || true
+          
+          echo "Kiểm tra danh sách file bản quyền đã tải về máy ảo..."
+          ls -la "$HOME/Library/Application Support/Unity/licenses/" || true
 
-          echo "Bắt đầu xuất dự án Xcode từ Unity..."
+          echo "Bắt đầu xuất dự án Xcode từ Unity ở chế độ Batchmode..."
           $UNITY_HOME/Contents/MacOS/Unity \
             -batchmode \
             -quit \
