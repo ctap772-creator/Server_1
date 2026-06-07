@@ -26,23 +26,53 @@ workflows:
           yes Y | /Applications/Unity\ Hub.app/Contents/MacOS/Unity\ Hub -- --headless install-modules --version $UNITY_VERSION -m ios -a arm64
       - name: Unity build iOS project
         script: |
-          echo "Kích hoạt bản quyền Unity Personal trực tuyến bằng chế độ GUI..."
-          
-          # Chạy Unity GUI dưới nền để đăng nhập và tự động tải bản quyền Personal cho máy ảo
-          $UNITY_HOME/Contents/MacOS/Unity \
-            -username "$UNITY_USERNAME" \
-            -password "$UNITY_PASSWORD" &
-          
-          UNITY_PID=$!
-          echo "Đang đợi Unity Editor đăng nhập và kích hoạt bản quyền trực tuyến (25 giây)..."
-          sleep 25
-          
-          echo "Tắt tiến trình Unity GUI..."
-          kill -9 $UNITY_PID || true
-          killall Unity || true
-          
-          echo "Kiểm tra danh sách file bản quyền đã tải về máy ảo..."
-          ls -la "$HOME/Library/Application Support/Unity/licenses/" || true
+          # Đường dẫn lưu file bản quyền Named User License của Unity
+          LICENSE_DIR="$HOME/Library/Unity/licenses"
+          LICENSE_FILE="$LICENSE_DIR/UnityEntitlementLicense.xml"
+
+          echo "Kiểm tra file bản quyền Unity_lic.ulf trong dự án..."
+          if [ -f "Unity_lic.ulf" ]; then
+            echo "Tìm thấy file Unity_lic.ulf! Đang thiết lập bản quyền cho máy ảo..."
+            
+            mkdir -p "$LICENSE_DIR"
+            cp Unity_lic.ulf "$LICENSE_FILE"
+            
+            # Đồng thời thiết lập đường dẫn System-wide phòng trường hợp Unity tìm kiếm .ulf
+            sudo mkdir -p "/Library/Application Support/Unity"
+            sudo cp Unity_lic.ulf "/Library/Application Support/Unity/Unity_lic.ulf"
+            sudo chmod 644 "/Library/Application Support/Unity/Unity_lic.ulf"
+            
+            mkdir -p "$HOME/Library/Application Support/Unity"
+            cp Unity_lic.ulf "$HOME/Library/Application Support/Unity/Unity_lic.ulf"
+            
+            echo "Đã cấu hình xong file bản quyền!"
+          else
+            echo "=========================================================="
+            echo "CẢNH BÁO: Không tìm thấy file Unity_lic.ulf trong thư mục gốc của dự án!"
+            echo "Chúng ta sẽ tiến hành kích hoạt trực tuyến qua VNC (chỉ cần làm 1 LẦN DUY NHẤT):"
+            echo "1. Khi chạy build này, hãy chắc chắn chọn 'Enable SSH/VNC access' trong giao diện Codemagic khi nhấn Start Build."
+            echo "2. Kết nối VNC vào máy ảo (sử dụng phần mềm VNC Viewer trên Windows)."
+            echo "3. Trên màn hình macOS, mở ứng dụng Unity Hub."
+            echo "4. Đăng nhập tài khoản Unity của bạn và kích hoạt Personal License miễn phí."
+            echo "5. Tiến trình build sẽ tự động phát hiện khi bạn kích hoạt thành công!"
+            echo "=========================================================="
+            
+            echo "Đang đợi bạn kết nối VNC và kích hoạt bản quyền từ Unity Hub trên máy ảo..."
+            while [ ! -f "$LICENSE_FILE" ]; do
+              sleep 5
+            done
+            
+            echo "Đã phát hiện file bản quyền được tạo thành công!"
+            # Copy file bản quyền ra thư mục dự án để Codemagic xuất thành Artifact cho bạn tải về
+            cp "$LICENSE_FILE" ./Unity_lic.ulf
+            
+            echo "=========================================================="
+            echo "NỘI DUNG FILE BẢN QUYỀN (Bạn có thể copy văn bản dưới đây và lưu thành file Unity_lic.ulf):"
+            echo "----------------------------------------------------------"
+            cat "$LICENSE_FILE"
+            echo "----------------------------------------------------------"
+            echo "=========================================================="
+          fi
 
           echo "Bắt đầu xuất dự án Xcode từ Unity ở chế độ Batchmode..."
           $UNITY_HOME/Contents/MacOS/Unity \
@@ -84,3 +114,4 @@ workflows:
           echo "Đã đóng gói thành công file game.ipa!"
     artifacts:
       - PROJECT_NRO_240_GOC/build/ios/*.ipa
+      - Unity_lic.ulf
