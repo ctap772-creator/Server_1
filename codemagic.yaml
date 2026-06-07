@@ -2,13 +2,43 @@ workflows:
   unity-ios-workflow:
     name: Unity iOS Build
     max_build_duration: 60
+    instance_type: mac_mini_m1
     environment:
-      vars:
-        UNITY_BIN: "/Applications/Unity/Hub/Editor/2022.3.x/Unity.app/Contents/MacOS/Unity"
+      groups:
+        - unity_credentials # Nhóm biến chứa tài khoản Unity (UNITY_USERNAME, UNITY_PASSWORD, UNITY_SERIAL)
+      unity: 2022.3.46f1
+      xcode: latest
+      cocoapods: default
     scripts:
       - name: Unity build iOS project
         script: |
           echo "Bắt đầu xuất dự án Xcode từ Unity..."
-          # Lệnh này sẽ kích hoạt Unity trên máy ảo để build tự động
+          $UNITY_BIN \
+            -batchmode \
+            -quit \
+            -projectPath PROJECT_NRO_240_GOC \
+            -buildTarget iOS \
+            -executeMethod CodemagicBuildScript.BuildIOS \
+            -logFile /dev/stdout
+      - name: Build and Package iOS App (.ipa)
+        script: |
+          echo "Bắt đầu biên dịch Xcode project..."
+          xcodebuild \
+            -workspace PROJECT_NRO_240_GOC/build/ios/Unity-iPhone.xcworkspace \
+            -scheme Unity-iPhone \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath PROJECT_NRO_240_GOC/build/ios/Unity-iPhone.xcarchive \
+            archive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+
+          echo "Đóng gói file .app thành .ipa (unsigned)..."
+          mkdir -p PROJECT_NRO_240_GOC/build/ios/Payload
+          cp -r PROJECT_NRO_240_GOC/build/ios/Unity-iPhone.xcarchive/Products/Applications/Unity-iPhone.app PROJECT_NRO_240_GOC/build/ios/Payload/
+          
+          cd PROJECT_NRO_240_GOC/build/ios
+          zip -r game.ipa Payload
+          echo "Đã đóng gói thành công file game.ipa!"
     artifacts:
-      - build/ios/*.ipa
+      - PROJECT_NRO_240_GOC/build/ios/*.ipa
