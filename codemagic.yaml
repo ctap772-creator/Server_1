@@ -35,7 +35,8 @@ workflows:
             -projectPath PROJECT_NRO_240_GOC \
             -buildTarget iOS \
             -executeMethod CodemagicBuildScript.BuildIOS \
-            -logFile /dev/stdout
+            -logFile unity_build.log || (cat unity_build.log && exit 1)
+          cat unity_build.log
       - name: Build and Package iOS App (.ipa)
         script: |
           echo "Bắt đầu biên dịch Xcode project..."
