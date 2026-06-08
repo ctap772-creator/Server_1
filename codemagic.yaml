@@ -73,8 +73,8 @@ workflows:
               elif [ -f "/Library/Application Support/Unity/Unity_lic.ulf" ]; then
                 FOUND_LICENSE="/Library/Application Support/Unity/Unity_lic.ulf"
               else
-                # 5. Tìm kiếm quét toàn bộ thư mục cấu hình của Unity
-                ANY_FILE=$(find "$HOME/Library/Unity" "$HOME/Library/Application Support/Unity" -name "*.xml" -o -name "*.ulf" 2>/dev/null | head -n 1)
+                # 5. Tìm kiếm quét các file có tên chính xác
+                ANY_FILE=$(find "$HOME/Library/Unity" "$HOME/Library/Application Support/Unity" -name "UnityEntitlementLicense.xml" -o -name "Unity_lic.ulf" 2>/dev/null | head -n 1)
                 if [ -n "$ANY_FILE" ]; then
                   FOUND_LICENSE="$ANY_FILE"
                 fi
