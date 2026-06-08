@@ -124,15 +124,29 @@ workflows:
       - name: Build and Package iOS App (.ipa)
         script: |
           echo "Bắt đầu biên dịch Xcode project..."
-          xcodebuild \
-            -workspace PROJECT_NRO_240_GOC/build/ios/Unity-iPhone.xcworkspace \
-            -scheme Unity-iPhone \
-            -configuration Release \
-            -sdk iphoneos \
-            -archivePath PROJECT_NRO_240_GOC/build/ios/Unity-iPhone.xcarchive \
-            archive \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO
+          if [ -d "PROJECT_NRO_240_GOC/build/ios/Unity-iPhone.xcworkspace" ]; then
+            echo "Tìm thấy file .xcworkspace, tiến hành biên dịch bằng workspace..."
+            xcodebuild \
+              -workspace PROJECT_NRO_240_GOC/build/ios/Unity-iPhone.xcworkspace \
+              -scheme Unity-iPhone \
+              -configuration Release \
+              -sdk iphoneos \
+              -archivePath PROJECT_NRO_240_GOC/build/ios/Unity-iPhone.xcarchive \
+              archive \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO
+          else
+            echo "Không tìm thấy .xcworkspace, tiến hành biên dịch bằng .xcodeproj..."
+            xcodebuild \
+              -project PROJECT_NRO_240_GOC/build/ios/Unity-iPhone.xcodeproj \
+              -scheme Unity-iPhone \
+              -configuration Release \
+              -sdk iphoneos \
+              -archivePath PROJECT_NRO_240_GOC/build/ios/Unity-iPhone.xcarchive \
+              archive \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO
+          fi
           
           XCODE_EXIT_CODE=$?
           if [ $XCODE_EXIT_CODE -ne 0 ]; then
