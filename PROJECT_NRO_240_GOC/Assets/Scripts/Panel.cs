@@ -8586,7 +8586,10 @@ public class Panel : IActionListener, IChatable
 			MyVector myVector = new MyVector();
 			myVector.addElement(new Command(mResources.GETOUT, this, 6001, currItem));
 			ModFunc.GI().itemPhale = currItem;
-			myVector.addElement(new Command("Nhập số sao", this, 8010, currItem));
+			if (ModFunc.IsPhaLeHoaPanel(this))
+			{
+				myVector.addElement(new Command("Nhập số sao", this, 8010, currItem));
+			}
 			if (currItem != null)
 			{
 				GameCanvas.menu.startAt(myVector, X, (selected + 1) * ITEM_HEIGHT - cmy + yScroll);

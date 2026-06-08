@@ -2468,6 +2468,7 @@ public class GameCanvas : IActionListener
 				mFont.tahoma_7_yellow.drawString(g, thongBaoTest, xThongBaoTranslate, num, 0);
 				g.setClip(0, 0, w, h);
 			}
+			ModFunc.GI().PaintAutoPhaLe(g);
 		}
 		catch (Exception)
 		{

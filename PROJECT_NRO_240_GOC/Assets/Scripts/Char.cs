@@ -954,6 +954,10 @@ public class Char : IMapObject
 
 	private int tBlue;
 
+	public static Image[] imgBlue;
+
+	public static Image[] imgViolet;
+
 	private bool IsAddDust1;
 
 	private bool IsAddDust2;
@@ -5450,7 +5454,11 @@ public class Char : IMapObject
 		}
 		if (statusMe == 1 || statusMe == 6)
 		{
-			if (ModFunc.GiamDungLuong || GameCanvas.panel.isShow || mSystem.currentTimeMillis() - timeBlue <= 0)
+			if (ModFunc.GiamDungLuong || GameCanvas.panel.isShow)
+			{
+				return;
+			}
+			if (mSystem.currentTimeMillis() - timeBlue <= 0)
 			{
 				return;
 			}
@@ -5496,6 +5504,19 @@ public class Char : IMapObject
 				{
 					tBlue = 0;
 				}
+				if (imgBlue == null)
+				{
+					imgBlue = new Image[7];
+					for (int i = 0; i < 7; i++)
+					{
+						imgBlue[i] = GameCanvas.loadImage("/effectdata/blue/" + i + ".png");
+					}
+				}
+				if (tBlue >= 0 && tBlue < imgBlue.Length && imgBlue[tBlue] != null)
+				{
+					g.drawImage(imgBlue[tBlue], cx, cy + 8, mGraphics.BOTTOM | mGraphics.HCENTER);
+				}
+				return;
 			}
 			else if (clevel == 15)
 			{
@@ -5507,29 +5528,39 @@ public class Char : IMapObject
 				{
 					tBlue = 0;
 				}
+				if (imgViolet == null)
+				{
+					imgViolet = new Image[7];
+					for (int i = 0; i < 7; i++)
+					{
+						imgViolet[i] = GameCanvas.loadImage("/effectdata/violet/" + i + ".png");
+					}
+				}
+				if (tBlue >= 0 && tBlue < imgViolet.Length && imgViolet[tBlue] != null)
+				{
+					g.drawImage(imgViolet[tBlue], cx, cy + 8, mGraphics.BOTTOM | mGraphics.HCENTER);
+				}
+				return;
 			}
-			else
+			if (clevel < 16)
 			{
-				if (clevel < 16)
-				{
-					return;
-				}
-				int num = -1;
-				int num2 = 4;
-				if (clevel >= 16 && clevel < 22)
-				{
-					num = 7599;
-					num2 = 4;
-				}
-				if (num != -1)
-				{
-					SmallImage.paintStandAuraFrame(g, num, num2, cx, cy + 2);
-				}
+				return;
+			}
+			int num = -1;
+			int num2 = 4;
+			if (clevel >= 16 && clevel < 22)
+			{
+				num = 7599;
+				num2 = 4;
+			}
+			if (num != -1)
+			{
+				SmallImage.paintStandAuraFrame(g, num, num2, cx, cy + 2);
 			}
 		}
 		else
 		{
-			timeBlue = mSystem.currentTimeMillis() + 1500;
+			timeBlue = mSystem.currentTimeMillis() + ((clevel == 14 || clevel == 15) ? 2000 : 1500);
 			IsAddDust1 = true;
 			IsAddDust2 = true;
 		}

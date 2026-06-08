@@ -58,18 +58,53 @@ workflows:
             echo "=========================================================="
             
             echo "Đang đợi bạn kết nối VNC và kích hoạt bản quyền từ Unity Hub trên máy ảo..."
-            while [ ! -f "$LICENSE_FILE" ]; do
-              sleep 5
+            FOUND_LICENSE=""
+            while [ -z "$FOUND_LICENSE" ]; do
+              # 1. Kiểm tra file XML ở thư mục chuẩn
+              if [ -f "$HOME/Library/Unity/licenses/UnityEntitlementLicense.xml" ]; then
+                FOUND_LICENSE="$HOME/Library/Unity/licenses/UnityEntitlementLicense.xml"
+              # 2. Kiểm tra file XML ở thư mục App Support
+              elif [ -f "$HOME/Library/Application Support/Unity/licenses/UnityEntitlementLicense.xml" ]; then
+                FOUND_LICENSE="$HOME/Library/Application Support/Unity/licenses/UnityEntitlementLicense.xml"
+              # 3. Kiểm tra file ulf ở thư mục App Support
+              elif [ -f "$HOME/Library/Application Support/Unity/Unity_lic.ulf" ]; then
+                FOUND_LICENSE="$HOME/Library/Application Support/Unity/Unity_lic.ulf"
+              # 4. Kiểm tra file ulf ở thư mục hệ thống
+              elif [ -f "/Library/Application Support/Unity/Unity_lic.ulf" ]; then
+                FOUND_LICENSE="/Library/Application Support/Unity/Unity_lic.ulf"
+              else
+                # 5. Tìm kiếm quét toàn bộ thư mục cấu hình của Unity
+                ANY_FILE=$(find "$HOME/Library/Unity" "$HOME/Library/Application Support/Unity" -name "*.xml" -o -name "*.ulf" 2>/dev/null | head -n 1)
+                if [ -n "$ANY_FILE" ]; then
+                  FOUND_LICENSE="$ANY_FILE"
+                fi
+              fi
+              
+              if [ -z "$FOUND_LICENSE" ]; then
+                sleep 5
+              fi
             done
             
-            echo "Đã phát hiện file bản quyền được tạo thành công!"
+            echo "Đã phát hiện file bản quyền được tạo thành công tại: $FOUND_LICENSE"
+            
+            # Copy file bản quyền ra tất cả các thư mục chuẩn để Unity Editor nhận dạng được
+            mkdir -p "$LICENSE_DIR"
+            cp "$FOUND_LICENSE" "$LICENSE_FILE"
+            
+            sudo mkdir -p "/Library/Application Support/Unity"
+            sudo cp "$FOUND_LICENSE" "/Library/Application Support/Unity/Unity_lic.ulf"
+            sudo chmod 644 "/Library/Application Support/Unity/Unity_lic.ulf"
+            
+            mkdir -p "$HOME/Library/Application Support/Unity"
+            cp "$FOUND_LICENSE" "$HOME/Library/Application Support/Unity/Unity_lic.ulf"
+            
             # Copy file bản quyền ra thư mục dự án để Codemagic xuất thành Artifact cho bạn tải về
-            cp "$LICENSE_FILE" ./Unity_lic.ulf
+            cp "$FOUND_LICENSE" ./Unity_lic.ulf
             
             echo "=========================================================="
             echo "NỘI DUNG FILE BẢN QUYỀN (Bạn có thể copy văn bản dưới đây và lưu thành file Unity_lic.ulf):"
             echo "----------------------------------------------------------"
-            cat "$LICENSE_FILE"
+            cat "$FOUND_LICENSE"
             echo "----------------------------------------------------------"
             echo "=========================================================="
           fi

@@ -1360,6 +1360,11 @@ public class ModFunc : IActionListener
 		return panel != null && panel.type == 12 && (ContainsNormalizedText(panel.combineTopInfo, "7 vien ngoc rong") || (ContainsNormalizedText(panel.combineTopInfo, "ngoc rong") && ContainsNormalizedText(panel.combineInfo, "cung sao")));
 	}
 
+	public static bool IsPhaLeHoaPanel(Panel panel)
+	{
+		return panel != null && panel.type == 12 && ContainsNormalizedText(panel.combineTopInfo, "trang bị pha lê");
+	}
+
 	private int GetAutoDapDoInterval()
 	{
 		float num = Mathf.Max(1f, Time.timeScale);
@@ -1895,10 +1900,6 @@ public class ModFunc : IActionListener
 
 	private void UpdateTouch()
 	{
-		if (GameScr.gI().isNotPaintTouchControl())
-		{
-			return;
-		}
 		if (isAutoDapDo && !isEditButton && Panel.imgX != null)
 		{
 			string textTitle = "[AUTO ĐẬP ĐỒ] " + GetAutoDapDoPhaseText();
@@ -1914,14 +1915,19 @@ public class ModFunc : IActionListener
 		if (isAutoPhaLe && !isEditButton && Panel.imgX != null)
 		{
 			string textTitle = (itemPhale != null) ? itemPhale.template.name : "Chưa Có";
+			int yStart = 10;
 			int btnX = GameCanvas.w / 2 + mFont.tahoma_7b_red.getWidth(textTitle) / 2 + 5;
-			int btnY = 72 + mFont.tahoma_7b_red.getHeight() / 2 - Panel.imgX.getHeight() / 2;
+			int btnY = yStart + mFont.tahoma_7b_red.getHeight() / 2 - Panel.imgX.getHeight() / 2;
 			if (GameCanvas.isPointerHoldIn(btnX - 10, btnY - 10, Panel.imgX.getWidth() + 20, Panel.imgX.getHeight() + 20) && GameCanvas.isPointerClick && GameCanvas.isPointerJustRelease)
 			{
 				StopAutoPhaLeFromButton();
 				GameCanvas.clearAllPointerEvent();
 				return;
 			}
+		}
+		if (GameScr.gI().isNotPaintTouchControl())
+		{
+			return;
 		}
 		if (GameCanvas.isPointerHoldIn(GameScr.imgPanel.getWidth() + 3, 10, GameScr.imgArrow.getWidth() + 2, GameScr.imgArrow.getHeight() + 2) && GameCanvas.isPointerClick && GameCanvas.isPointerJustRelease)
 		{
@@ -2251,20 +2257,7 @@ public class ModFunc : IActionListener
 				g.drawImage(Panel.imgX, btnX, btnY, 0);
 			}
 		}
-		if (isAutoPhaLe && !isEditButton)
-		{
-			string textTitle = (itemPhale != null) ? itemPhale.template.name : "Chưa Có";
-			mFont.tahoma_7b_red.drawString(g, textTitle, GameCanvas.w / 2, 72, mFont.CENTER);
-			mFont.tahoma_7b_red.drawString(g, (itemPhale != null) ? ("Số Sao : " + currPhale) : "Số Sao : -1", GameCanvas.w / 2, 82, mFont.CENTER);
-			mFont.tahoma_7b_red.drawString(g, "Số Sao Cần Đập : " + maxPhale + " Sao | " + GetAutoPhaLeBatchName(), GameCanvas.w / 2, 92, mFont.CENTER);
-			if (Panel.imgX != null)
-			{
-				int btnX = GameCanvas.w / 2 + mFont.tahoma_7b_red.getWidth(textTitle) / 2 + 5;
-				int btnY = 72 + mFont.tahoma_7b_red.getHeight() / 2 - Panel.imgX.getHeight() / 2;
-				g.drawImage(Panel.imgX, btnX, btnY, 0);
-			}
-		}
-		if ((isAutoPhaLe || isAutoVQMM) && !isEditButton)
+		if (isAutoVQMM && !isEditButton)
 		{
 			Item tv = FindItemBagWithIndexUI(FindItemIndex(457));
 			mFont.tahoma_7b_red.drawString(g, "Ngọc Xanh : " + NinjaUtil.getMoneys(Char.myCharz().luong) + " Ngọc Hồng : " + NinjaUtil.getMoneys(Char.myCharz().luongKhoa), GameCanvas.w / 2, 102, mFont.CENTER);
@@ -2363,6 +2356,27 @@ public class ModFunc : IActionListener
 		g.setColor(16711680);
 		g.drawRect(resetX, y, buttonWidth, buttonHeight);
 		mFont.tahoma_7b_white.drawString(g, "Reset", resetX + buttonWidth / 2, y + 5, mFont.CENTER);
+	}
+
+	public void PaintAutoPhaLe(mGraphics g)
+	{
+		if (isAutoPhaLe && !isEditButton && GameCanvas.currentScreen == GameScr.gI())
+		{
+			string textTitle = (itemPhale != null) ? itemPhale.template.name : "Chưa Có";
+			int yStart = 10;
+			mFont.tahoma_7b_red.drawStringBorder(g, textTitle, GameCanvas.w / 2, yStart, mFont.CENTER, mFont.tahoma_7_grey);
+			mFont.tahoma_7b_red.drawStringBorder(g, (itemPhale != null) ? ("Số Sao : " + currPhale) : "Số Sao : -1", GameCanvas.w / 2, yStart + 11, mFont.CENTER, mFont.tahoma_7_grey);
+			mFont.tahoma_7b_red.drawStringBorder(g, "Số Sao Cần Đập : " + maxPhale + " Sao | " + GetAutoPhaLeBatchName(), GameCanvas.w / 2, yStart + 22, mFont.CENTER, mFont.tahoma_7_grey);
+			if (Panel.imgX != null)
+			{
+				int btnX = GameCanvas.w / 2 + mFont.tahoma_7b_red.getWidth(textTitle) / 2 + 5;
+				int btnY = yStart + mFont.tahoma_7b_red.getHeight() / 2 - Panel.imgX.getHeight() / 2;
+				g.drawImage(Panel.imgX, btnX, btnY, 0);
+			}
+			Item tv = FindItemBagWithIndexUI(FindItemIndex(457));
+			mFont.tahoma_7b_red.drawStringBorder(g, "Ngọc Xanh : " + NinjaUtil.getMoneys(Char.myCharz().luong) + " Ngọc Hồng : " + NinjaUtil.getMoneys(Char.myCharz().luongKhoa), GameCanvas.w / 2, yStart + 33, mFont.CENTER, mFont.tahoma_7_grey);
+			mFont.tahoma_7b_red.drawStringBorder(g, "Vàng : " + NinjaUtil.getMoneys(Char.myCharz().xu) + " Thỏi Vàng : " + (tv?.quantity ?? 0), GameCanvas.w / 2, yStart + 44, mFont.CENTER, mFont.tahoma_7_grey);
+		}
 	}
 
 	private void PaintNoiTai(mGraphics g)
